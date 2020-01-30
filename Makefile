@@ -1,11 +1,11 @@
 # Search path
-VPATH =
+VPATH = data data-raw eda reports scripts
 
 # Processed data files
-DATA =
+DATA = games.rds
 
 # EDA studies
-EDA =
+EDA = games.md
 
 # Reports
 REPORTS =
@@ -14,10 +14,10 @@ REPORTS =
 all : $(DATA) $(EDA) $(REPORTS)
 
 # Data dependencies
-
+games.rds : games.json
 
 # EDA study and report dependencies
-
+games.md : games.rds
 
 # Pattern rules
 %.rds : %.R
