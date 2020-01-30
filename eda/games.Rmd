@@ -17,30 +17,29 @@ library(tidyverse)
 
 # Parameters
 rds_path <- here::here("data/games.rds")
+
+eco_levels = c("A", "B", "C", "D", "E")
 #===============================================================================
 
-# Code
 ```
 
 
 Here is the first draft of my initial C01 analysis on lichess's database chess data. As a first run, I'm using data from Lichess's January 2013 database. The raw PGN file is 16.1 MB, with 121,332 games.
 
-To start, let's read in this data
+To start, let's read in this data and perform any EDA modifications
 
 ```{r}
 games <-
   read_rds(rds_path)
 
-glimpse(games)
 summary(games)
 ```
 
 
+First off, let's do some 1D visualizations to get a sense of how the continuous variables look
 
 
 ```{r}
-# Some initial plots:
-
 # Distribution of white ratings
 games %>% 
   ggplot(mapping = aes(x = white_elo)) +
@@ -52,33 +51,58 @@ games %>%
   ggplot(mapping = aes(x = white_elo_diff)) +
   geom_histogram(binwidth = 10) +
   geom_vline(aes(xintercept = median(games$white_elo_diff), color = "Median"))
+
+# Distribution of black ratings
+games %>% 
+  ggplot(mapping = aes(x = black_elo)) +
+  geom_histogram(binwidth = 10) +
+  geom_vline(aes(xintercept = median(games$white_elo), color = "Median"))
+
 ```
 
+Some thoughts:
+
+* Note the odd spike at `white_elo = 1500`. This is because Lichess assigns newly signed-up members an initial rating of 1500
+
+* As a median, this dataset saw the white players slightly higher than their black counterparts.
+
+
+Now for the discrete variables:
 
 ```{r}
-# Initial plots: how do opening codes look?
+# Frequency of time types:
+games %>% 
+  ggplot(mapping = aes(x = time_type)) +
+  geom_bar()
 
-# Among all games
+# Frequency of results:
+games %>% 
+  ggplot(mapping = aes(x = result)) +
+  geom_bar()
+
+# Frequency of termination:
+games %>% 
+  ggplot(mapping = aes(x = termination)) +
+  geom_bar()
+
+# Opening Frequencies:
 games %>%
   transmute(
-    eco_start = substring(eco, 1, 1),
-    above_1700 = white_elo >= 1700 & black_elo >= 1700) %>%
-  count(eco_start, above_1700) %>%
-  group_by(above_1700) %>% 
-  mutate(
-    prop = n / sum(n)
+    eco_start = factor(substring(eco, 1, 1), levels = eco_levels)
   ) %>% 
-  ggplot(mapping = aes(x = eco_start, y = prop)) +
-  geom_col(mapping = aes(fill = above_1700)) +
-  facet_grid(cols = vars(above_1700))
-
-
+  ggplot(mapping = aes(x = eco_start)) +
+  geom_bar()
 ```
 
+Thoughts:
 
+* The game has a good mix of bullet, blitz, and classical game. Correspondence is much less represented (n = 180) and might as well be removed later perhaps.
 
+* Compared to top level over-the-board chess, there are very few draws here. White also wins more often than black.
 
+* Most games are terminated on the board, but a healthy amount are also won/lost on time.
 
+* Across all these games, C is the most common ECO code, followed by B, A, D, and E.
 
 
 
